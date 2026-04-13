@@ -1,0 +1,640 @@
+/*
+ * Copyright (C) 2015-2026 Philip Helger (www.helger.com)
+ * philip[at]helger[dot]com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.helger.phase4.crypto;
+
+import java.security.Provider;
+import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.X509Certificate;
+import java.util.function.Consumer;
+
+import org.apache.wss4j.common.WSS4JConstants;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+
+import com.helger.annotation.Nonempty;
+import com.helger.annotation.OverridingMethodsMustInvokeSuper;
+import com.helger.annotation.concurrent.NotThreadSafe;
+import com.helger.annotation.style.ReturnsMutableCopy;
+import com.helger.annotation.style.ReturnsMutableObject;
+import com.helger.base.clone.ICloneable;
+import com.helger.base.enforce.ValueEnforcer;
+import com.helger.base.string.StringHelper;
+import com.helger.base.tostring.ToStringGenerator;
+import com.helger.phase4.logging.Phase4LoggerFactory;
+import com.helger.phase4.model.pmode.leg.PModeLegSecurity;
+
+/**
+ * AS4 encrypt/decrypt parameters
+ *
+ * @author Philip Helger
+ * @author Gregor Scholtysik
+ * @since 0.9.0
+ */
+@NotThreadSafe
+public class AS4CryptParams implements ICloneable <AS4CryptParams>
+{
+  public static final ECryptoKeyIdentifierType DEFAULT_KEY_IDENTIFIER_TYPE = ECryptoKeyIdentifierType.BST_DIRECT_REFERENCE;
+  public static final ECryptoKeyEncryptionAlgorithm DEFAULT_KEY_ENCRYPTION_ALGORITHM = ECryptoKeyEncryptionAlgorithm.RSA_OAEP_XENC11;
+  public static final String DEFAULT_MGF_ALGORITHM = WSS4JConstants.MGF_SHA256;
+  public static final String DEFAULT_DIGEST_ALGORITHM = WSS4JConstants.SHA256;
+  public static final ICryptoSessionKeyProvider DEFAULT_SESSION_KEY_PROVIDER = ICryptoSessionKeyProvider.INSTANCE_RANDOM_AES_128;
+  public static final boolean DEFAULT_ENCRYPT_SYMMETRIC_SESSION_KEY = true;
+
+  private static final Logger LOGGER = Phase4LoggerFactory.getLogger (AS4CryptParams.class);
+
+  // The key identifier type to use
+  private ECryptoKeyIdentifierType m_eKeyIdentifierType = DEFAULT_KEY_IDENTIFIER_TYPE;
+  // The algorithm to use
+  private ECryptoAlgorithmCrypt m_eAlgorithmCrypt;
+  // The key encryption algorithm
+  private ECryptoKeyEncryptionAlgorithm m_eKeyEncAlgorithm = DEFAULT_KEY_ENCRYPTION_ALGORITHM;
+  // The MGF algorithm to use with the RSA-OAEP key transport algorithm
+  private String m_sMGFAlgorithm = DEFAULT_MGF_ALGORITHM;
+  // The digest algorithm to use with the RSA-OAEP key transport algorithm
+  private String m_sDigestAlgorithm = DEFAULT_DIGEST_ALGORITHM;
+  // Key agreement method (e.g. X25519, X448, ECDH-ES) - null means no key
+  // agreement (use key transport instead)
+  private ECryptoKeyAgreementMethod m_eKeyAgreementMethod;
+  // Key derivation function (e.g. HKDF, ConcatKDF) - only used with key
+  // agreement
+  private ECryptoKeyDerivationMethod m_eKeyDerivationMethod;
+  // Key wrap algorithm (e.g. AES-128 KeyWrap) - only used with key agreement
+  private ECryptoKeyWrapAlgorithm m_eKeyWrapAlgorithm;
+  // The explicit certificate to use - has precedence over the alias
+  private X509Certificate m_aCert;
+  // The alias into the WSS4J crypto config
+  private String m_sAlias;
+  // The session key provider
+  private ICryptoSessionKeyProvider m_aSessionKeyProvider = DEFAULT_SESSION_KEY_PROVIDER;
+  private Provider m_aSecurityProviderEncrypt;
+  private Provider m_aSecurityProviderDecrypt;
+  private boolean m_bEncryptSymmetricSessionKey = DEFAULT_ENCRYPT_SYMMETRIC_SESSION_KEY;
+  private IWSSecEncryptCustomizer m_aWSSecEncryptCustomizer;
+
+  /**
+   * Default constructor using default {@link #setKeyIdentifierType(ECryptoKeyIdentifierType)},
+   * {@link #setKeyEncAlgorithm(ECryptoKeyEncryptionAlgorithm)}, {@link #setMGFAlgorithm(String)}
+   * and {@link #setDigestAlgorithm(String)}
+   */
+  public AS4CryptParams ()
+  {}
+
+  public boolean isCryptEnabled (@Nullable final Consumer <String> aWarningConsumer)
+  {
+    if (m_eAlgorithmCrypt == null)
+      return false;
+
+    // One of certificate or alias must be present
+    if (!hasCertificate () && !hasAlias ())
+    {
+      if (aWarningConsumer != null)
+        aWarningConsumer.accept ("Crypt parameters have an algorithm defined but neither an alias nor a certificate was provided. Therefore encryption is not enabled.");
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * @return The key identifier type. May not be <code>null</code>.
+   * @since 0.11.0
+   */
+  @NonNull
+  public final ECryptoKeyIdentifierType getKeyIdentifierType ()
+  {
+    return m_eKeyIdentifierType;
+  }
+
+  /**
+   * Set the key identifier type to use. That defines how the information about the signing
+   * certificate is transmitted.
+   *
+   * @param eKeyIdentifierType
+   *        The key identifier type to use. May not be <code>null</code>.
+   * @return this for chaining
+   * @since 0.11.0
+   */
+  @NonNull
+  public final AS4CryptParams setKeyIdentifierType (@NonNull final ECryptoKeyIdentifierType eKeyIdentifierType)
+  {
+    ValueEnforcer.notNull (eKeyIdentifierType, "KeyIdentifierType");
+    m_eKeyIdentifierType = eKeyIdentifierType;
+    return this;
+  }
+
+  /**
+   * @return The encryption algorithm to use. May be <code>null</code>.
+   */
+  @Nullable
+  public final ECryptoAlgorithmCrypt getAlgorithmCrypt ()
+  {
+    return m_eAlgorithmCrypt;
+  }
+
+  /**
+   * A encryption algorithm can be set. <br>
+   * MANDATORY if you want to use encryption.
+   *
+   * @param eAlgorithmCrypt
+   *        the encryption algorithm that should be set
+   * @return this for chaining
+   */
+  @NonNull
+  public final AS4CryptParams setAlgorithmCrypt (@Nullable final ECryptoAlgorithmCrypt eAlgorithmCrypt)
+  {
+    m_eAlgorithmCrypt = eAlgorithmCrypt;
+    return this;
+  }
+
+  @NonNull
+  public final ECryptoKeyEncryptionAlgorithm getKeyEncAlgorithm ()
+  {
+    return m_eKeyEncAlgorithm;
+  }
+
+  @NonNull
+  public final AS4CryptParams setKeyEncAlgorithm (@NonNull final ECryptoKeyEncryptionAlgorithm eKeyEncAlgorithm)
+  {
+    m_eKeyEncAlgorithm = eKeyEncAlgorithm;
+    return this;
+  }
+
+  /**
+   * @return The mask generation function (MGF) algorithm to use with the RSA-OAEP key transport
+   *         algorithm. The default is {@link #DEFAULT_MGF_ALGORITHM}
+   */
+  @NonNull
+  @Nonempty
+  public final String getMGFAlgorithm ()
+  {
+    return m_sMGFAlgorithm;
+  }
+
+  /**
+   * Set the mask generation function (MGF) algorithm to use with the RSA-OAEP key transport
+   * algorithm.
+   *
+   * @param sMGFAlgorithm
+   *        The MFG algorithm to use. May neither be <code>null</code> nor empty.
+   * @return this for chaining
+   */
+  @NonNull
+  public final AS4CryptParams setMGFAlgorithm (@NonNull @Nonempty final String sMGFAlgorithm)
+  {
+    ValueEnforcer.notEmpty (sMGFAlgorithm, "MGFAlgorithm");
+    m_sMGFAlgorithm = sMGFAlgorithm;
+    return this;
+  }
+
+  /**
+   * @return The digest algorithm to use with the RSA-OAEP key transport algorithm. The default is
+   *         {@link #DEFAULT_DIGEST_ALGORITHM}
+   */
+  @NonNull
+  @Nonempty
+  public final String getDigestAlgorithm ()
+  {
+    return m_sDigestAlgorithm;
+  }
+
+  /**
+   * Set the digest algorithm to use with the RSA-OAEP key transport algorithm.
+   *
+   * @param sDigestAlgorithm
+   *        The digest algorithm to use. May neither be <code>null</code> nor empty.
+   * @return this for chaining
+   */
+  @NonNull
+  public final AS4CryptParams setDigestAlgorithm (@NonNull @Nonempty final String sDigestAlgorithm)
+  {
+    ValueEnforcer.notEmpty (sDigestAlgorithm, "DigestAlgorithm");
+    m_sDigestAlgorithm = sDigestAlgorithm;
+    return this;
+  }
+
+  /**
+   * @return The key agreement method to use. May be <code>null</code>, in which case key transport
+   *         (e.g. RSA-OAEP) is used instead of key agreement.
+   * @since 4.4.0
+   */
+  @Nullable
+  public final ECryptoKeyAgreementMethod getKeyAgreementMethod ()
+  {
+    return m_eKeyAgreementMethod;
+  }
+
+  /**
+   * @return <code>true</code> if a key agreement method is set, <code>false</code> if not.
+   * @since 4.4.0
+   */
+  public final boolean hasKeyAgreementMethod ()
+  {
+    return m_eKeyAgreementMethod != null;
+  }
+
+  /**
+   * Set the key agreement method to use. When set, the encryption will use key agreement (e.g.
+   * ECDH-ES, X25519) instead of key transport (e.g. RSA-OAEP). If set to <code>null</code>, key
+   * transport is used.
+   *
+   * @param eKeyAgreementMethod
+   *        The key agreement method. May be <code>null</code>.
+   * @return this for chaining
+   * @since 4.4.0
+   */
+  @NonNull
+  public final AS4CryptParams setKeyAgreementMethod (@Nullable final ECryptoKeyAgreementMethod eKeyAgreementMethod)
+  {
+    m_eKeyAgreementMethod = eKeyAgreementMethod;
+    return this;
+  }
+
+  /**
+   * @return The key derivation function to use with key agreement. May be <code>null</code>.
+   * @since 4.4.0
+   */
+  @Nullable
+  public final ECryptoKeyDerivationMethod getKeyDerivationMethod ()
+  {
+    return m_eKeyDerivationMethod;
+  }
+
+  /**
+   * Set the key derivation function to use with key agreement (e.g. HKDF, ConcatKDF).
+   *
+   * @param eKeyDerivationMethod
+   *        The key derivation method. May be <code>null</code>.
+   * @return this for chaining
+   * @since 4.4.0
+   */
+  @NonNull
+  public final AS4CryptParams setKeyDerivationMethod (@Nullable final ECryptoKeyDerivationMethod eKeyDerivationMethod)
+  {
+    m_eKeyDerivationMethod = eKeyDerivationMethod;
+    return this;
+  }
+
+  /**
+   * @return The key wrap algorithm to use with key agreement. May be <code>null</code>.
+   * @since 4.4.0
+   */
+  @Nullable
+  public final ECryptoKeyWrapAlgorithm getKeyWrapAlgorithm ()
+  {
+    return m_eKeyWrapAlgorithm;
+  }
+
+  /**
+   * Set the key wrap algorithm to use with key agreement (e.g. AES-128 KeyWrap).
+   *
+   * @param eKeyWrapAlgorithm
+   *        The key wrap algorithm. May be <code>null</code>.
+   * @return this for chaining
+   * @since 4.4.0
+   */
+  @NonNull
+  public final AS4CryptParams setKeyWrapAlgorithm (@Nullable final ECryptoKeyWrapAlgorithm eKeyWrapAlgorithm)
+  {
+    m_eKeyWrapAlgorithm = eKeyWrapAlgorithm;
+    return this;
+  }
+
+  /**
+   * Convenience method to set all parameters required for eDelivery AS4 2.0 EdDSA/X25519 key
+   * agreement: X25519 key agreement, HKDF key derivation, AES-128 key wrap.
+   *
+   * @return this for chaining
+   * @since 4.4.0
+   */
+  @NonNull
+  public final AS4CryptParams setEDelivery2KeyAgreementX25519 ()
+  {
+    return setKeyAgreementMethod (ECryptoKeyAgreementMethod.X25519).setKeyDerivationMethod (ECryptoKeyDerivationMethod.HKDF)
+                                                                   .setKeyWrapAlgorithm (ECryptoKeyWrapAlgorithm.AES_128);
+  }
+
+  /**
+   * Convenience method to set all parameters required for eDelivery AS4 2.0 ECDSA/ECDH-ES key
+   * agreement: ECDH-ES key agreement, HKDF key derivation, AES-128 key wrap.
+   *
+   * @return this for chaining
+   * @since 4.4.0
+   */
+  @NonNull
+  public final AS4CryptParams setEDelivery2KeyAgreementECDHES ()
+  {
+    return setKeyAgreementMethod (ECryptoKeyAgreementMethod.ECDH_ES).setKeyDerivationMethod (ECryptoKeyDerivationMethod.HKDF)
+                                                                    .setKeyWrapAlgorithm (ECryptoKeyWrapAlgorithm.AES_128);
+  }
+
+  /**
+   * @return The currently set X509 certificate. May be <code>null</code>.
+   */
+  @Nullable
+  public final X509Certificate getCertificate ()
+  {
+    return m_aCert;
+  }
+
+  /**
+   * @return <code>true</code> if an X509 certificate is present, <code>false</code> if not.
+   */
+  public final boolean hasCertificate ()
+  {
+    return m_aCert != null;
+  }
+
+  /**
+   * Set the X509 certificate be used. The provided certificate is not checked for validity. If it
+   * is expired only a warning is logged but the certificate will still be used.
+   *
+   * @param aCert
+   *        The certificate to be used. May be <code>null</code>.
+   * @return this for chaining
+   */
+  @NonNull
+  public final AS4CryptParams setCertificate (@Nullable final X509Certificate aCert)
+  {
+    m_aCert = aCert;
+    if (aCert != null)
+    {
+      // Note: this is informational only. If the certificate is expired and you
+      // don't want that, you need check that before
+      try
+      {
+        aCert.checkValidity ();
+      }
+      catch (final CertificateExpiredException ex)
+      {
+        LOGGER.warn ("The provided certificate is already expired. Please use a different one: " + ex.getMessage ());
+      }
+      catch (final CertificateNotYetValidException ex)
+      {
+        LOGGER.warn ("The provided certificate is not yet valid. Please use a different one: " + ex.getMessage ());
+      }
+    }
+    return this;
+  }
+
+  @Nullable
+  public final String getAlias ()
+  {
+    return m_sAlias;
+  }
+
+  public final boolean hasAlias ()
+  {
+    return StringHelper.isNotEmpty (m_sAlias);
+  }
+
+  @NonNull
+  public final AS4CryptParams setAlias (@Nullable final String sAlias)
+  {
+    m_sAlias = sAlias;
+    return this;
+  }
+
+  /**
+   * @return The session key provider to be used. Never <code>null</code>.
+   * @since 2.1.2
+   */
+  @NonNull
+  public final ICryptoSessionKeyProvider getSessionKeyProvider ()
+  {
+    return m_aSessionKeyProvider;
+  }
+
+  /**
+   * Set the session key provider to be used for encryption. The provided provider must never return
+   * a <code>null</code> key.
+   *
+   * @param aSessionKeyProvider
+   *        The session key provider to be used. May not be <code>null</code>.
+   * @return this for chaining
+   * @since 2.1.2
+   */
+  @NonNull
+  public final AS4CryptParams setSessionKeyProvider (@NonNull final ICryptoSessionKeyProvider aSessionKeyProvider)
+  {
+    ValueEnforcer.notNull (aSessionKeyProvider, "SessionKeyProvider");
+    m_aSessionKeyProvider = aSessionKeyProvider;
+    return this;
+  }
+
+  /**
+   * Note: this is currently not used by WSS4J
+   *
+   * @return The security provider to be used for encryption (not for decryption). May be
+   *         <code>null</code>.
+   * @since 2.4.0
+   */
+  @Nullable
+  public final Provider getSecurityProviderEncrypt ()
+  {
+    return m_aSecurityProviderEncrypt;
+  }
+
+  /**
+   * Set the security provider to be used for encryption (not for decryption).<br>
+   * Note: this is currently not used by WSS4J
+   *
+   * @param aSecurityProviderEncrypt
+   *        The security provider to be used. May be <code>null</code>.
+   * @return this for chaining
+   * @since 2.4.0
+   */
+  @NonNull
+  public final AS4CryptParams setSecurityProviderEncrypt (@Nullable final Provider aSecurityProviderEncrypt)
+  {
+    m_aSecurityProviderEncrypt = aSecurityProviderEncrypt;
+    return this;
+  }
+
+  /**
+   * Note: this is currently not used by WSS4J
+   *
+   * @return The security provider to be used for decryption (not for encryption). May be
+   *         <code>null</code>.
+   * @since 2.4.0
+   */
+  @Nullable
+  public final Provider getSecurityProviderDecrypt ()
+  {
+    return m_aSecurityProviderDecrypt;
+  }
+
+  /**
+   * Set the security provider to be used for decryption (not for encryption).<br>
+   * Note: this is currently not used by WSS4J
+   *
+   * @param aSecurityProviderDecrypt
+   *        The security provider to be used. May be <code>null</code>.
+   * @return this for chaining
+   * @since 2.4.0
+   */
+  @NonNull
+  public final AS4CryptParams setSecurityProviderDecrypt (@Nullable final Provider aSecurityProviderDecrypt)
+  {
+    m_aSecurityProviderDecrypt = aSecurityProviderDecrypt;
+    return this;
+  }
+
+  /**
+   * Set the security provider to be used for encryption and decryption.
+   *
+   * @param aSecurityProvider
+   *        The security provider to be used. May be <code>null</code>.
+   * @return this for chaining
+   * @since 2.1.4
+   */
+  @NonNull
+  public final AS4CryptParams setSecurityProvider (@Nullable final Provider aSecurityProvider)
+  {
+    return setSecurityProviderEncrypt (aSecurityProvider).setSecurityProviderDecrypt (aSecurityProvider);
+  }
+
+  /**
+   * @return <code>true</code> if the symmetric session key should be part of the transmission or
+   *         <code>false</code> if not. Default is {@link #DEFAULT_ENCRYPT_SYMMETRIC_SESSION_KEY}
+   * @since 2.1.4
+   */
+  public final boolean isEncryptSymmetricSessionKey ()
+  {
+    return m_bEncryptSymmetricSessionKey;
+  }
+
+  /**
+   * Enable or disable the inclusion of the symmetric session key into the transmission or not.
+   *
+   * @param b
+   *        <code>true</code> to enabled, <code>false</code> to disable it.
+   * @return this for chaining
+   * @since 2.1.4
+   */
+  @NonNull
+  public final AS4CryptParams setEncryptSymmetricSessionKey (final boolean b)
+  {
+    m_bEncryptSymmetricSessionKey = b;
+    return this;
+  }
+
+  @Nullable
+  public final IWSSecEncryptCustomizer getWSSecEncryptCustomizer ()
+  {
+    return m_aWSSecEncryptCustomizer;
+  }
+
+  public final boolean hasWSSecEncryptCustomizer ()
+  {
+    return m_aWSSecEncryptCustomizer != null;
+  }
+
+  @NonNull
+  public final AS4CryptParams setWSSecEncryptCustomizer (@Nullable final IWSSecEncryptCustomizer a)
+  {
+    m_aWSSecEncryptCustomizer = a;
+    return this;
+  }
+
+  /**
+   * This method calls {@link #setAlgorithmCrypt(ECryptoAlgorithmCrypt)} based on the PMode
+   * parameters. If the PMode parameter is <code>null</code> the value will be set to
+   * <code>null</code>.
+   *
+   * @param aSecurity
+   *        The PMode security stuff to use. May be <code>null</code>.
+   * @return this for chaining
+   * @see #setAlgorithmCrypt(ECryptoAlgorithmCrypt)
+   */
+  @NonNull
+  public final AS4CryptParams setFromPMode (@Nullable final PModeLegSecurity aSecurity)
+  {
+    if (aSecurity == null)
+    {
+      setAlgorithmCrypt (null);
+    }
+    else
+    {
+      setAlgorithmCrypt (aSecurity.getX509EncryptionAlgorithm ());
+    }
+    return this;
+  }
+
+  @OverridingMethodsMustInvokeSuper
+  public void cloneTo (@NonNull final AS4CryptParams aTarget)
+  {
+    ValueEnforcer.notNull (aTarget, "Target");
+    aTarget.setKeyIdentifierType (m_eKeyIdentifierType)
+           .setAlgorithmCrypt (m_eAlgorithmCrypt)
+           .setKeyEncAlgorithm (m_eKeyEncAlgorithm)
+           .setMGFAlgorithm (m_sMGFAlgorithm)
+           .setDigestAlgorithm (m_sDigestAlgorithm)
+           .setKeyAgreementMethod (m_eKeyAgreementMethod)
+           .setKeyDerivationMethod (m_eKeyDerivationMethod)
+           .setKeyWrapAlgorithm (m_eKeyWrapAlgorithm)
+           .setCertificate (m_aCert)
+           .setAlias (m_sAlias)
+           .setSessionKeyProvider (m_aSessionKeyProvider)
+           .setSecurityProviderEncrypt (m_aSecurityProviderEncrypt)
+           .setSecurityProviderDecrypt (m_aSecurityProviderDecrypt)
+           .setEncryptSymmetricSessionKey (m_bEncryptSymmetricSessionKey)
+           .setWSSecEncryptCustomizer (m_aWSSecEncryptCustomizer);
+  }
+
+  @NonNull
+  @ReturnsMutableCopy
+  public AS4CryptParams getClone ()
+  {
+    final AS4CryptParams ret = new AS4CryptParams ();
+    cloneTo (ret);
+    return ret;
+  }
+
+  @Override
+  public String toString ()
+  {
+    return new ToStringGenerator (null).append ("KeyIdentifierType", m_eKeyIdentifierType)
+                                       .append ("AlgorithmCrypt", m_eAlgorithmCrypt)
+                                       .append ("KeyEncAlgorithm", m_eKeyEncAlgorithm)
+                                       .append ("MGFAlgorithm", m_sMGFAlgorithm)
+                                       .append ("DigestAlgorithm", m_sDigestAlgorithm)
+                                       .appendIfNotNull ("KeyAgreementMethod", m_eKeyAgreementMethod)
+                                       .appendIfNotNull ("KeyDerivationMethod", m_eKeyDerivationMethod)
+                                       .appendIfNotNull ("KeyWrapAlgorithm", m_eKeyWrapAlgorithm)
+                                       .append ("Certificate", m_aCert)
+                                       .append ("Alias", m_sAlias)
+                                       .append ("SessionKeyProvider", m_aSessionKeyProvider)
+                                       .append ("SecurityProviderEncrypt", m_aSecurityProviderEncrypt)
+                                       .append ("SecurityProviderDecrypt", m_aSecurityProviderDecrypt)
+                                       .append ("EncryptSymmetricSessionKey", m_bEncryptSymmetricSessionKey)
+                                       .append ("WSSecEncryptCustomizer", m_aWSSecEncryptCustomizer)
+                                       .getToString ();
+  }
+
+  /**
+   * @return A non-<code>null</code> default instance.
+   * @see #setAlgorithmCrypt(ECryptoAlgorithmCrypt)
+   */
+  @NonNull
+  @ReturnsMutableObject
+  public static AS4CryptParams createDefault ()
+  {
+    return new AS4CryptParams ().setAlgorithmCrypt (ECryptoAlgorithmCrypt.ENCRYPTION_ALGORITHM_DEFAULT);
+  }
+}

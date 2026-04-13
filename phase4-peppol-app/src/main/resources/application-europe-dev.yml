@@ -1,0 +1,122 @@
+#
+# Copyright (C) 2023-2025 Philip Helger (www.helger.com)
+# philip[at]helger[dot]com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+global:
+  debug: false
+  production: false
+  nostartupinfo: true
+
+server:
+  port: 9191
+
+org:
+  apache:
+    wss4j:
+      crypto:
+        merlin:
+          keystore:
+            type: PKCS12
+            file: 'D:\Cloud\OneDrive - b4value.net GmbH\Workspace\certificates\Test\European\2025-G3\Peppol_AP_TEST_G3.p12'
+            password: ''
+            alias: 'PEPPOL ACCESS POINT TEST CA - G3'
+            private:
+              password: ''
+          truststore:
+            type: PKCS12
+            file: 'truststore\\ap-test-truststore.p12'
+            password: peppol
+
+# SMP Client
+smpclient:
+  truststore:
+    type: PKCS12
+    # All these truststores are predefined, and are part of the peppol-commons library
+    #   See https://github.com/phax/peppol-commons/tree/master/peppol-commons/src/main/resources/truststore
+    #
+    # For Test only use:       truststore/2018/smp-pilot-truststore.jks
+    # For Production only use: truststore/2018/smp-prod-truststore.jks
+    path: 'truststore\\smp-test-truststore.p12'
+    password: 'peppol'
+
+# Use this to switch between "prod" (production) and "test" (test)
+peppol:
+  stage: test
+  # Peppol Seat ID taken from AP/SMP certificate
+  seat-id: PDE000216
+
+c1:
+  country:
+    validation:
+      enabled: false
+
+# Custom variables
+configuration:
+  api:
+    url: 'https://api.test.core.traffiqx.net/config/api/v2/core-settings'
+    # The key here must be accordingly to specific service. Here is PPA key at configuration portal
+    key: 'ty3vjm+GUercj+ryF/J0PpvMV0LYtatNTW60YGiBHjPeIbK/D2TQosCSlmXkeeW8x2f9QEL3MevMpODeQBrrpA'
+
+# AS4 dump directory to store .as4in (Peppol receipt). MUST ending with receipts
+phase4:
+  data:
+    path: 'generated\\sbd\\'
+  api:
+    requiredtoken: NjIh9tIx3Rgzme19mGIy
+
+smp:
+  asia:
+    url: 'https://smp.test.peppolsmp.sg/peppol/'
+
+b4:
+  access-point:
+    location: 'Asia'
+
+receiver-check:
+  disabled: false
+
+
+
+# File Cleanup Configuration. (.sbd)
+file:
+  cleanup:
+    enabled: true
+    cron: '0 43 13 * * ?'
+    retention:
+      days: 1
+    dry-run: false
+    extension: sbd
+
+logging:
+  level:
+    root: INFO
+    io.opentelemetry: INFO
+
+# OpenTelemetry Configuration
+otel:
+  instrumentation:
+    micrometer:
+      enabled: true
+  service:
+    name: "B4.Peppol.Phase4.Server"
+  exporter:
+    otlp:
+      endpoint: "http://localhost:4318"
+      logging:
+        enabled: true
+      metrics:
+        enabled: true
+      traces:
+        enabled: true

@@ -24,14 +24,17 @@ RUN apk add --no-cache maven
 # Set working directory
 WORKDIR /app
 
-# Copy pom.xml first for better Docker layer caching
+# Copy all pom files first for better Docker layer caching
 COPY pom.xml .
+COPY phase4-lib/pom.xml ./phase4-lib/
+COPY phase4-peppol-app/pom.xml ./phase4-peppol-app/
 
 # Download dependencies
 RUN mvn dependency:go-offline -B
 
 # Copy source code
-COPY src ./src
+COPY phase4-lib/src ./phase4-lib/src
+COPY phase4-peppol-app/src ./phase4-peppol-app/src
 
 # Build the application
 RUN mvn clean install -DskipTests
@@ -43,6 +46,6 @@ FROM eclipse-temurin:21-alpine
 VOLUME /tmp
 
 # Copy the built jar from builder stage
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/phase4-peppol-app/target/*.jar app.jar
 
 ENTRYPOINT ["java","-jar","/app.jar"]

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f2405c6c-dac9-406a-9b01-b893df445173" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Dockerfile.multistage" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile.multistage" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-build.cmd" beforeDir="false" afterPath="$PROJECT_DIR$/docker-build.cmd" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-build.sh" beforeDir="false" afterPath="$PROJECT_DIR$/docker-build.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/etc/javadoc.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/etc/license-template.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/APConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/Phase4PeppolStandaloneApplication.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/controller/HttpForbiddenException.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/controller/HttpInternalServerErrorException.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/controller/HttpNotFoundException.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/controller/PeppolReportingController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/controller/PeppolSender.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/controller/PeppolSenderController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/reporting/AppReportingHelper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/servlet/SchedulerConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/servlet/ServletConfig.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/servlet/SpringBootAS4Servlet.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/helger/phase4/peppolstandalone/spi/CustomPeppolIncomingSBDHandlerSPI.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/LICENSE" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/META-INF/services/com.helger.phase4.peppol.servlet.IPhase4PeppolIncomingSBDHandlerSPI" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/NOTICE" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/invalid-keystore-pw-peppol.jks" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/logback.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/static/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/helger/phase4/peppolstandalone/Phase4PeppolStandaloneApplicationTests.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/helger/phase4/peppolstandalone/SPITest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/resources/external/example-invoice.xml" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="36vBfrEjdmid5oeSSSLxrdU6bgC" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.Phase4PeppolStandaloneApplication.executor": "Debug",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "task/add-phase4lib-to-test-c1countrycode",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/Workspace/Sources/B4/helger/forked-phase4-peppol-standalone/src/main/resources/truststore",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "show.migrate.to.gradle.popup": "false",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Workspace\Sources\B4\helger\forked-phase4-peppol-standalone\src\main\resources\truststore" />
+      <recent name="D:\Workspace\Sources\B4\helger\forked-phase4-peppol-standalone\src\main\resources" />
+      <recent name="D:\Workspace\Sources\B4\helger\phase4-peppol-standalone\src\main\resources" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.helger.phase4.peppolstandalone.config" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="Phase4PeppolStandaloneApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" temporary="true" nameIsGenerated="true">
+      <option name="ACTIVE_PROFILES" value="europe-dev" />
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+      <module name="phase4-peppol-app" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.helger.phase4.peppolstandalone.Phase4PeppolStandaloneApplication" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.helger.phase4.peppolstandalone.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Spring Boot.Phase4PeppolStandaloneApplication" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.32098.37" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.32098.37" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f2405c6c-dac9-406a-9b01-b893df445173" name="Changes" comment="" />
+      <created>1765877270744</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1765877270744</updated>
+      <workItem from="1765877271890" duration="1938000" />
+      <workItem from="1768205876739" duration="1153000" />
+      <workItem from="1768207958783" duration="501000" />
+      <workItem from="1768208719669" duration="1219000" />
+      <workItem from="1772510611280" duration="4133000" />
+      <workItem from="1774415571603" duration="5806000" />
+      <workItem from="1774939394896" duration="2026000" />
+      <workItem from="1775569767070" duration="1370000" />
+      <workItem from="1776062870197" duration="1861000" />
+      <workItem from="1776067634510" duration="7509000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/phase4-peppol-app/src/main/java/com/helger/phase4/peppolstandalone/controller/PeppolSenderController.java</url>
+          <line>199</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/phase4-peppol-app/src/main/java/com/helger/phase4/peppolstandalone/controller/PeppolSenderController.java</url>
+          <line>172</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

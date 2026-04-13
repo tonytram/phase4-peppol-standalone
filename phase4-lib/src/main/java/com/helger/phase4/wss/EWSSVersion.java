@@ -1,0 +1,96 @@
+/*
+ * Copyright (C) 2015-2026 Philip Helger (www.helger.com)
+ * philip[at]helger[dot]com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.helger.phase4.wss;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import com.helger.annotation.Nonempty;
+import com.helger.base.lang.EnumHelper;
+import com.helger.base.string.StringHelper;
+
+/**
+ * Specifies the different WS Security versions available
+ *
+ * @author bayerlma
+ */
+public enum EWSSVersion
+{
+  @Deprecated (forRemoval = false)
+  WSS_10("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "wsse", "1.0"),
+  @Deprecated (forRemoval = false)
+  WSS_11("http://docs.oasis-open.org/wss/oasis-wss-wssecurity-secext-1.1.xsd", "wsse11", "1.1"),
+  WSS_111 ("http://docs.oasis-open.org/wss/oasis-wss-wssecurity-secext-1.1.xsd", "wsse11", "1.1.1");
+
+  private final String m_sNamespaceURI;
+  private final String m_sNamespacePrefix;
+  private final String m_sVersion;
+
+  EWSSVersion (@NonNull @Nonempty final String sNamespaceURI,
+               @NonNull @Nonempty final String sNamespacePrefix,
+               @NonNull @Nonempty final String sVersion)
+  {
+    m_sNamespaceURI = sNamespaceURI;
+    m_sNamespacePrefix = sNamespacePrefix;
+    m_sVersion = sVersion;
+  }
+
+  /**
+   * @return The namespace URI of the specification. Neither <code>null</code> nor empty.
+   */
+  @NonNull
+  @Nonempty
+  public String getNamespaceURI ()
+  {
+    return m_sNamespaceURI;
+  }
+
+  /**
+   * @return The intended namespace prefix to be used. Neither <code>null</code> nor empty.
+   */
+  @NonNull
+  @Nonempty
+  public String getNamespacePrefix ()
+  {
+    return m_sNamespacePrefix;
+  }
+
+  /**
+   * @return The specification version number. Neither <code>null</code> nor empty.
+   */
+  @NonNull
+  @Nonempty
+  public String getVersion ()
+  {
+    return m_sVersion;
+  }
+
+  @Nullable
+  public static EWSSVersion getFromVersionOrNull (@Nullable final String sVersion)
+  {
+    return getFromVersionOrDefault (sVersion, null);
+  }
+
+  @Nullable
+  public static EWSSVersion getFromVersionOrDefault (@Nullable final String sVersion,
+                                                     @Nullable final EWSSVersion eDefault)
+  {
+    if (StringHelper.isEmpty (sVersion))
+      return eDefault;
+    return EnumHelper.findFirst (EWSSVersion.class, x -> x.getVersion ().equals (sVersion), eDefault);
+  }
+}

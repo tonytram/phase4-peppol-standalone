@@ -1,0 +1,101 @@
+/*
+ * Copyright (C) 2015-2026 Philip Helger (www.helger.com)
+ * philip[at]helger[dot]com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.helger.phase4.incoming.soap;
+
+import java.io.IOException;
+
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
+
+import org.apache.wss4j.common.ext.WSPasswordCallback;
+import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+
+import com.helger.annotation.Nonempty;
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.base.enforce.ValueEnforcer;
+import com.helger.phase4.crypto.IAS4CryptoFactory;
+import com.helger.phase4.logging.Phase4LoggerFactory;
+
+/**
+ * Internal WSS4J callback handler to check if a certain key alias is present in the
+ * {@link IAS4CryptoFactory}, and if so return the password for accessing it.
+ *
+ * @author Philip Helger
+ */
+@Immutable
+public final class AS4KeyStoreCallbackHandler implements CallbackHandler
+{
+  private static final Logger LOGGER = Phase4LoggerFactory.getLogger (AS4KeyStoreCallbackHandler.class);
+
+  private final IAS4CryptoFactory m_aCryptoFactoryCrypt;
+
+  public AS4KeyStoreCallbackHandler (@NonNull final IAS4CryptoFactory aCryptoFactoryCrypt)
+  {
+    ValueEnforcer.notNull (aCryptoFactoryCrypt, "CryptoFactoryCrypt");
+    m_aCryptoFactoryCrypt = aCryptoFactoryCrypt;
+  }
+
+  @NonNull
+  @Nonempty
+  private static String _getUsage (final int nUsage)
+  {
+    return switch (nUsage)
+    {
+      case WSPasswordCallback.UNKNOWN -> "UNKNOWN";
+      case WSPasswordCallback.DECRYPT -> "DECRYPT";
+      case WSPasswordCallback.USERNAME_TOKEN -> "USERNAME_TOKEN";
+      case WSPasswordCallback.SIGNATURE -> "SIGNATURE";
+      case WSPasswordCallback.SECURITY_CONTEXT_TOKEN -> "SECURITY_CONTEXT_TOKEN";
+      case WSPasswordCallback.CUSTOM_TOKEN -> "CUSTOM_TOKEN";
+      case WSPasswordCallback.SECRET_KEY -> "SECRET_KEY";
+      case WSPasswordCallback.PASSWORD_ENCRYPTOR_PASSWORD -> "PASSWORD_ENCRYPTOR_PASSWORD";
+      default -> "Unknown usage value " + nUsage;
+    };
+  }
+
+  public void handle (final Callback [] aCallbacks) throws IOException, UnsupportedCallbackException
+  {
+    for (final Callback aCallback : aCallbacks)
+    {
+      if (!(aCallback instanceof final WSPasswordCallback aPasswordCallback))
+      {
+        throw new UnsupportedCallbackException (aCallback, "Unrecognized Callback");
+      }
+      final String sKeyStoreAlias = aPasswordCallback.getIdentifier ();
+
+      // Obtain the password from the crypto factory
+      final String sKeyPassword = m_aCryptoFactoryCrypt.getKeyPasswordPerAlias (sKeyStoreAlias);
+      if (sKeyPassword != null)
+      {
+        aPasswordCallback.setPassword (sKeyPassword);
+        LOGGER.info ("Found keystore password for alias '" +
+                     sKeyStoreAlias +
+                     "' and usage " +
+                     _getUsage (aPasswordCallback.getUsage ()));
+      }
+      else
+      {
+        LOGGER.warn ("Found unsupported keystore alias '" +
+                     sKeyStoreAlias +
+                     "' and usage " +
+                     _getUsage (aPasswordCallback.getUsage ()));
+      }
+    }
+  }
+}

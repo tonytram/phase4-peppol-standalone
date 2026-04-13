@@ -1,0 +1,147 @@
+/*
+ * Copyright (C) 2015-2026 Philip Helger (www.helger.com)
+ * philip[at]helger[dot]com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.helger.phase4.attachment;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import com.helger.annotation.Nonempty;
+import com.helger.base.id.IHasID;
+import com.helger.base.lang.EnumHelper;
+import com.helger.base.string.StringHelper;
+import com.helger.mime.CMimeType;
+import com.helger.mime.IMimeType;
+
+/**
+ * Defines the allowed AS4 compression modes.
+ *
+ * @author Philip Helger
+ */
+public enum EAS4CompressionMode implements IHasID <String>
+{
+  /** GZip compression mode */
+  GZIP ("gzip", CMimeType.APPLICATION_GZIP, ".gz")
+  {
+    @Override
+    @NonNull
+    public InputStream getDecompressStream (@NonNull final InputStream aIS) throws IOException
+    {
+      return new GZIPInputStream (aIS);
+    }
+
+    @Override
+    @NonNull
+    public OutputStream getCompressStream (@NonNull final OutputStream aOS) throws IOException
+    {
+      return new GZIPOutputStream (aOS);
+    }
+  };
+
+  private final String m_sID;
+  private final IMimeType m_aMimeType;
+  private final String m_sFileExtension;
+
+  EAS4CompressionMode (@NonNull @Nonempty final String sID,
+                       @NonNull final IMimeType aMimeType,
+                       @NonNull @Nonempty final String sFileExtension)
+  {
+    m_sID = sID;
+    m_aMimeType = aMimeType;
+    m_sFileExtension = sFileExtension;
+  }
+
+  @NonNull
+  @Nonempty
+  public String getID ()
+  {
+    return m_sID;
+  }
+
+  /**
+   * @return The MIME type of the compression mode. Never <code>null</code>.
+   */
+  @NonNull
+  public IMimeType getMimeType ()
+  {
+    return m_aMimeType;
+  }
+
+  /**
+   * @return The string representation of the MIME type of the compression mode. Never
+   *         <code>null</code>.
+   */
+  @NonNull
+  @Nonempty
+  public String getMimeTypeAsString ()
+  {
+    return m_aMimeType.getAsString ();
+  }
+
+  /**
+   * @return The file extension including the leading dot (e.g. ".gz")
+   */
+  @NonNull
+  @Nonempty
+  public String getFileExtension ()
+  {
+    return m_sFileExtension;
+  }
+
+  /**
+   * Get an {@link InputStream} to decompress the provided {@link InputStream}.
+   *
+   * @param aIS
+   *        The source {@link InputStream}. May not be <code>null</code>.
+   * @return The decompressing {@link InputStream}
+   * @throws IOException
+   *         In case of IO error
+   */
+  @NonNull
+  public abstract InputStream getDecompressStream (@NonNull InputStream aIS) throws IOException;
+
+  /**
+   * Get an {@link OutputStream} to compress the provided {@link OutputStream}.
+   *
+   * @param aOS
+   *        The source {@link OutputStream}. May not be <code>null</code>.
+   * @return The compressing {@link OutputStream}
+   * @throws IOException
+   *         In case of IO error
+   */
+  @NonNull
+  public abstract OutputStream getCompressStream (@NonNull OutputStream aOS) throws IOException;
+
+  @Nullable
+  public static EAS4CompressionMode getFromMimeTypeStringOrNull (@Nullable final String sMimeType)
+  {
+    if (StringHelper.isEmpty (sMimeType))
+      return null;
+    return EnumHelper.findFirst (EAS4CompressionMode.class, x -> x.getMimeTypeAsString ().equals (sMimeType));
+  }
+
+  @Nullable
+  public static EAS4CompressionMode getFromIDOrNull (final String sID)
+  {
+    return EnumHelper.getFromIDOrNull (EAS4CompressionMode.class, sID);
+  }
+}
