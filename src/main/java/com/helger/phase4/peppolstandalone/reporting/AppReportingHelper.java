@@ -171,7 +171,7 @@ public final class AppReportingHelper
                                                                                                    sReceiverID,
                                                                                                    aDocTypeID.getURIEncoded (),
                                                                                                    aProcessID.getURIEncoded (),
-                                                                                                   sCountryC1);
+                                                                                                   sCountryC1, false);
       return aSendingReport.getAsXMLString ();
     };
 

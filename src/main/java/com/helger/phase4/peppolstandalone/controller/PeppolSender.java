@@ -16,6 +16,8 @@
  */
 package com.helger.phase4.peppolstandalone.controller;
 
+import com.helger.phase4.crypto.AS4CryptoFactoryConfiguration;
+import com.helger.phase4.crypto.AS4CryptoFactoryInMemoryKeyStore;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.w3c.dom.Document;
@@ -49,6 +51,9 @@ import com.helger.phase4.util.Phase4Exception;
 import com.helger.security.certificate.TrustedCAChecker;
 import com.helger.smpclient.peppol.SMPClientReadOnly;
 import com.helger.xml.serialize.read.DOMReader;
+
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 
 /**
  * This contains the main Peppol sending code. It was extracted from the controller to make it more
@@ -93,7 +98,8 @@ public final class PeppolSender
                                                                          @NonNull @Nonempty final String sReceiverID,
                                                                          @NonNull @Nonempty final String sDocTypeID,
                                                                          @NonNull @Nonempty final String sProcessID,
-                                                                         @NonNull @Nonempty final String sCountryCodeC1)
+                                                                         @NonNull @Nonempty final String sCountryCodeC1,
+                                                                         final boolean isInbound)
   {
     final IIdentifierFactory aIF = PeppolIdentifierFactory.INSTANCE;
     final String sMyPeppolSeatID = APConfig.getMyPeppolSeatID ();
@@ -213,6 +219,19 @@ public final class PeppolSender
                                                                     aSendingReport.setAS4ReceivedSignalMsg (aSignalMsg);
                                                                   })
                                                                   .disableValidation ();
+
+      if(isInbound){
+        //region Set long certificate
+        final AS4CryptoFactoryInMemoryKeyStore aCryptoFactory = AS4CryptoFactoryConfiguration.getDefaultInstance();
+        final KeyStore.PrivateKeyEntry aPKE = aCryptoFactory.getPrivateKeyEntry();
+        X509Certificate certificate = (X509Certificate)aPKE.getCertificate();
+        aBuilder.receiverEndpointDetails (certificate, "http://localhost:8181/as4");
+
+        //endregion
+      }else {
+        aBuilder.smpClient(aSMPClient);
+      }
+
       final Wrapper <Phase4Exception> aCaughtEx = new Wrapper <> ();
       eResult = aBuilder.sendMessageAndCheckForReceipt (aCaughtEx::set);
       LOGGER.info ("Peppol client send result: " + eResult);

@@ -16,6 +16,7 @@
  */
 package com.helger.phase4.peppolstandalone;
 
+import com.helger.phase4.peppolstandalone.config.YamlConfigurationBridge;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -26,11 +27,13 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @author Philip Helger
  */
 @SpringBootApplication
-@EnableScheduling
+//@EnableScheduling
 public class Phase4PeppolStandaloneApplication
 {
   public static void main (final String [] args)
   {
-    SpringApplication.run (Phase4PeppolStandaloneApplication.class, args);
+    final SpringApplication app = new SpringApplication (Phase4PeppolStandaloneApplication.class);
+    app.addListeners (new YamlConfigurationBridge());
+    app.run (args);
   }
 }

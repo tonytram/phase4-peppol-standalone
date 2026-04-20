@@ -56,7 +56,7 @@ public class PeppolSenderController
     return "pong";
   }
 
-  @PostMapping (path = "/sendas4/{senderId}/{receiverId}/{docTypeId}/{processId}/{countryC1}",
+  @PostMapping (path = "/sendas4/{senderId}/{receiverId}/{docTypeId}/{processId}/{countryC1}/{isInbound}",
                 produces = MediaType.APPLICATION_JSON_VALUE)
   public String sendPeppolMessage (@RequestHeader (name = HEADER_X_TOKEN, required = true) final String xtoken,
                                    @RequestBody final byte [] aPayloadBytes,
@@ -64,7 +64,8 @@ public class PeppolSenderController
                                    @PathVariable final String receiverId,
                                    @PathVariable final String docTypeId,
                                    @PathVariable final String processId,
-                                   @PathVariable final String countryC1)
+                                   @PathVariable final String countryC1,
+                                   @PathVariable final boolean isInbound)
   {
     if (!APConfig.isSendingEnabled ())
     {
@@ -108,7 +109,8 @@ public class PeppolSenderController
                                                                                                  receiverId,
                                                                                                  docTypeId,
                                                                                                  processId,
-                                                                                                 countryC1);
+                                                                                                 countryC1,
+                                                                                                  isInbound);
 
     // Return as JSON
     return aSendingReport.getAsJsonString ();
