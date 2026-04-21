@@ -33,7 +33,9 @@ import com.helger.peppol.sbdh.PeppolSBDHDataReader;
 import com.helger.peppol.security.PeppolTrustedCA;
 import com.helger.peppol.servicedomain.EPeppolNetwork;
 import com.helger.peppol.sml.ISMLInfo;
+import com.helger.peppolid.factory.IIdentifierFactory;
 import com.helger.peppolid.factory.PeppolIdentifierFactory;
+import com.helger.peppolid.factory.SimpleIdentifierFactory;
 import com.helger.phase4.logging.Phase4LoggerFactory;
 import com.helger.phase4.peppol.Phase4PeppolSendingReport;
 import com.helger.phase4.peppolstandalone.APConfig;
@@ -165,9 +167,10 @@ public class PeppolSenderController
     return aSendingReport.getAsJsonString ();
   }
 
-  @PostMapping (path = "/sendsbdh", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PostMapping (path = "/sendsbdh/{isInbound}", produces = MediaType.APPLICATION_JSON_VALUE)
   public String sendPeppolSbdhMessage (@RequestHeader (name = HEADER_X_TOKEN, required = true) final String xtoken,
-                                       @RequestBody final byte [] aPayloadBytes)
+                                       @RequestBody final byte [] aPayloadBytes,
+                                       @PathVariable final boolean isInbound)
   {
     if (!APConfig.isSendingEnabled ())
     {
@@ -196,7 +199,12 @@ public class PeppolSenderController
     final PeppolSBDHData aData;
     try
     {
-      aData = new PeppolSBDHDataReader (PeppolIdentifierFactory.INSTANCE).extractData (new NonBlockingByteArrayInputStream (aPayloadBytes));
+      final boolean bSkipChecks = APConfig.isSbdhValueChecksDisabled ();
+      if (bSkipChecks)
+        LOGGER.warn ("SBDH value checks are DISABLED via config 'peppol.sbdh.value-checks.disabled' - for testing only");
+      final IIdentifierFactory aIF = bSkipChecks ? SimpleIdentifierFactory.INSTANCE : PeppolIdentifierFactory.INSTANCE;
+      aData = new PeppolSBDHDataReader (aIF).setPerformValueChecks (!bSkipChecks)
+                                            .extractData (new NonBlockingByteArrayInputStream (aPayloadBytes));
     }
     catch (final PeppolSBDHDataReadException ex)
     {
@@ -234,7 +242,7 @@ public class PeppolSenderController
                  sCountryCodeC1 +
                  "'");
 
-    PeppolSender.sendPeppolMessagePredefinedSbdh (aData, aSMLInfo, aAPCA, aSendingReport);
+    PeppolSender.sendPeppolMessagePredefinedSbdh (aData, aSMLInfo, aAPCA, aSendingReport, isInbound);
 
     // Return result JSON
     return aSendingReport.getAsJsonString ();

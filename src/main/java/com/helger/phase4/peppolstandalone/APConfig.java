@@ -118,6 +118,17 @@ public final class APConfig
     return getConfig ().getAsBoolean ("peppol.receiving.enabled", true);
   }
 
+  /**
+   * @return <code>true</code> if SBDH value checks (sender/receiver/doctype/process/country
+   *         validation) should be skipped. Intended for special testing scenarios only - enabling
+   *         this allows sending SBDHs that would otherwise be rejected as invalid Peppol
+   *         identifiers. Defaults to <code>false</code>.
+   */
+  public static boolean isSbdhValueChecksDisabled ()
+  {
+    return getConfig ().getAsBoolean ("peppol.sbdh.value-checks.disabled", false);
+  }
+
   private static final AtomicBoolean PROXY_INITED = new AtomicBoolean (false);
   private static HttpClientSettingsConfig.HttpClientConfig s_aHCC = null;
 
