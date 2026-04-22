@@ -56,7 +56,8 @@ public class YamlConfigurationBridge implements ApplicationListener<ApplicationE
       addPropertyIfExists(props, environment, "peppol.owner.countrycode");
       addPropertyIfExists(props, environment, "peppol.reporting.senderid");
       addPropertyIfExists(props, environment, "peppol.reporting.scheduled");
-      
+      addPropertyIfExists(props, environment, "peppol.sbdh.value-checks.disabled");
+
       // Phase4 settings
       addPropertyIfExists(props, environment, "phase4.endpoint.address");
       addPropertyIfExists(props, environment, "phase4.api.requiredtoken");

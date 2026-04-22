@@ -11,6 +11,10 @@ peppol:
   reporting:
     senderid: 9915:TestReportSender
     scheduled: 'true'
+
+  sbdh:
+    value-checks:
+      disabled: true
 phase4:
   endpoint:
     address: http://localhost:8080/as4
